@@ -22,6 +22,9 @@ import { notFound } from './middleware/notFound';
 // Импорт socket handlers
 import { setupSocketHandlers } from './socket/socketHandlers';
 
+// Импорт функции создания админа
+import { createAdminUser } from './utils/createAdmin';
+
 dotenv.config();
 
 const app = express();
@@ -68,10 +71,23 @@ setupSocketHandlers(io);
 app.use(notFound);
 app.use(errorHandler);
 
+// Автоматическое создание админа при запуске сервера
+createAdminUser().catch(error => {
+  console.error('⚠️  Ошибка создания админа:', error);
+});
+
 server.listen(PORT, () => {
   console.log(`🚀 Сервер запущен на порту ${PORT}`);
   console.log(`📊 API доступно по адресу: http://localhost:${PORT}/api`);
   console.log(`🔌 Socket.io подключен`);
+  console.log(`\n👤 Вход в систему:`);
+  console.log(`   Email: admin@tournament.local`);
+  console.log(`   Username: admin`);
+  console.log(`   Password: admin123`);
+  console.log(`\n   ИЛИ\n`);
+  console.log(`   Email: test@test.test`);
+  console.log(`   Username: test`);
+  console.log(`   Password: testtest`);
 });
 
 export { io };

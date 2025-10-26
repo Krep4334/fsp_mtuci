@@ -1,7 +1,10 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
-const prisma = new PrismaClient();
+// Используем глобальный экземпляр Prisma, чтобы не закрывать соединение
+const prisma = new PrismaClient({
+  log: process.env['NODE_ENV'] === 'development' ? ['query', 'error', 'warn'] : ['error'],
+});
 
 export async function createAdminUser() {
   try {
@@ -67,9 +70,7 @@ export async function createAdminUser() {
     };
   } catch (error) {
     console.error('❌ Ошибка создания админского пользователя:', error);
-    throw error;
-  } finally {
-    await prisma.$disconnect();
+    return null;
   }
 }
 
