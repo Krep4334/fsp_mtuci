@@ -7,9 +7,12 @@
     "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\"",
     "server:dev": "cd server && npm run dev",
     "client:dev": "cd client && npm run dev",
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run dev",
     "build": "cd client && npm run build",
     "start": "cd server && npm start",
-    "install:all": "npm install && cd server && npm install && cd ../client && npm install"
+    "install:all": "npm install && cd server && npm install && cd ../client && npm install",
+    "fix:permissions": "chmod +x node_modules/.bin/* && chmod +x server/node_modules/.bin/* && chmod +x client/node_modules/.bin/*"
   },
   "keywords": ["tournament", "management", "sports", "esports", "bracket"],
   "author": "Tournament System",

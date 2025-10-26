@@ -4,7 +4,7 @@
   "description": "Backend для системы управления турнирами",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "nodemon src/index.ts",
+    "dev": "nodemon",
     "build": "tsc",
     "start": "node dist/index.js",
     "db:migrate": "prisma migrate dev",
