@@ -224,6 +224,8 @@ router.post('/:id/result', authenticate, [
         endedAt: new Date()
       },
       include: {
+        tournament: true,
+        bracket: true,
         team1: {
           select: {
             id: true,
@@ -254,6 +256,31 @@ router.post('/:id/result', authenticate, [
         }
       }
     });
+
+    // Определяем победителя
+    const winnerTeamId = team1Score > team2Score 
+      ? match.team1Id 
+      : team2Score > team1Score 
+        ? match.team2Id 
+        : null;
+
+    console.log(`🏆 Результат матча ${id}: ${team1Score} - ${team2Score}, победитель: ${winnerTeamId}`);
+
+    // Автоматическое продвижение победителя в следующий раунд
+    if (winnerTeamId) {
+      const matchWithData = await prisma.match.findUnique({
+        where: { id },
+        include: { bracket: true }
+      });
+      
+      await advanceWinnerToNextRound(
+        match.tournamentId, 
+        match.round, 
+        match.position, 
+        winnerTeamId,
+        matchWithData?.bracket?.id || updatedMatch.bracket?.id || null
+      );
+    }
 
     res.status(201).json({
       success: true,
@@ -464,5 +491,79 @@ router.get('/tournament/:tournamentId/stats', async (req: any, res: any, next: a
     next(error);
   }
 });
+
+// Функция для автопродвижения победителя в следующий раунд
+async function advanceWinnerToNextRound(
+  tournamentId: string,
+  currentRound: number,
+  currentPosition: number,
+  winnerTeamId: string | null,
+  bracketId?: string | null
+): Promise<void> {
+  if (!winnerTeamId) return;
+
+  try {
+    // Находим следующий раунд
+    const nextRound = currentRound + 1;
+
+    // Определяем позицию победителя в следующем раунде
+    // Для Single Elimination позиция = Math.ceil(currentPosition / 2)
+    const nextPosition = Math.ceil(currentPosition / 2);
+
+    console.log(`📊 Расчет позиции: текущая позиция ${currentPosition} -> следующая позиция ${nextPosition}`);
+
+    console.log(`🔍 Поиск следующего матча: раунд ${nextRound}, позиция ${nextPosition}, bracketId: ${bracketId || 'null'}`);
+
+    // Ищем матч в следующем раунде
+    const nextMatch = await prisma.match.findFirst({
+      where: {
+        tournamentId,
+        ...(bracketId ? { bracketId } : {}),
+        round: nextRound,
+        position: nextPosition
+      }
+    });
+
+    if (!nextMatch) {
+      console.log(`⚠️ Следующий матч не найден для раунда ${nextRound}, позиции ${nextPosition}`);
+      
+      // Диагностика: показываем все матчи следующего раунда
+      const allMatchesNextRound = await prisma.match.findMany({
+        where: {
+          tournamentId,
+          ...(bracketId ? { bracketId } : {}),
+          round: nextRound
+        }
+      });
+      console.log(`📋 Все матчи раунда ${nextRound}:`, allMatchesNextRound.map(m => ({ 
+        id: m.id, 
+        position: m.position, 
+        team1: m.team1Id, 
+        team2: m.team2Id 
+      })));
+      
+      return;
+    }
+
+    // Определяем, какая команда (team1 или team2) должна быть заполнена
+    // Для позиций 1, 3, 5, 7... -> team1 в следующем матче
+    // Для позиций 2, 4, 6, 8... -> team2 в следующем матче
+    const isTeam1Position = currentPosition % 2 === 1;
+
+    console.log(`📝 Обновление матча ${nextMatch.id}: позиция ${currentPosition} -> ${isTeam1Position ? 'team1' : 'team2'}`);
+
+    await prisma.match.update({
+      where: { id: nextMatch.id },
+      data: {
+        ...(isTeam1Position ? { team1Id: winnerTeamId } : { team2Id: winnerTeamId })
+      }
+    });
+
+    console.log(`✅ Победитель ${winnerTeamId} продвинут в раунд ${nextRound}, позиция ${nextPosition}, матч ${nextMatch.id}`);
+  } catch (error) {
+    console.error('❌ Ошибка продвижения победителя:', error);
+    // Не бросаем ошибку, чтобы не сломать процесс завершения матча
+  }
+}
 
 export default router;

@@ -195,4 +195,31 @@ export const userAPI = {
     api.get(`/users/${id}/participations`),
 }
 
+// API для отладки (только для админов)
+export const debugAPI = {
+  createTestTournament: (data: {
+    name: string
+    type: string
+    teamCount?: number
+    playersPerTeam?: number
+    status?: string
+  }) =>
+    api.post('/debug/create-test-tournament', data),
+  
+  createQuickTestTournament: (preset: string) =>
+    api.post('/debug/quick-test-tournament', { preset }),
+  
+  getTestDataStats: () =>
+    api.get('/debug/test-data-stats'),
+  
+  cleanupTestData: () =>
+    api.delete('/debug/cleanup-test-data'),
+  
+  updateTestTournamentStatus: (id: string, status: string) =>
+    api.patch(`/debug/test-tournament/${id}/status`, { status }),
+  
+  getTestTournaments: () =>
+    api.get('/debug/test-tournaments'),
+}
+
 export default api

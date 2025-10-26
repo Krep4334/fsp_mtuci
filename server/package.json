@@ -9,7 +9,8 @@
     "start": "node dist/index.js",
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "admin:create": "ts-node src/utils/createAdmin.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.7.1",

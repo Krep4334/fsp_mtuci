@@ -70,11 +70,12 @@ export class TournamentBracketGenerator {
 
     while (nextRoundTeams > 1) {
       const currentRoundMatches = Math.ceil(nextRoundTeams / 2);
+      let positionInRound = 1; // Сбрасываем позицию для каждого раунда
       
       for (let i = 0; i < currentRoundMatches; i++) {
         matches.push({
           round: currentRound,
-          position: currentPosition++,
+          position: positionInRound++, // Отдельный счетчик позиции в раунде
           isBye: false
         });
       }
@@ -85,18 +86,33 @@ export class TournamentBracketGenerator {
 
     // Сохранение матчей в базу данных
     for (const match of matches) {
-      await prisma.match.create({
-        data: {
-          tournamentId,
-          bracketId: mainBracket.id,
-          team1Id: match.team1Id || '',
-          team2Id: match.team2Id || '',
-          round: match.round,
-          position: match.position,
-          isBye: match.isBye || false,
-          status: 'SCHEDULED'
-        }
-      });
+      const matchData: any = {
+        tournamentId,
+        bracketId: mainBracket.id,
+        round: match.round,
+        position: match.position,
+        isBye: match.isBye || false,
+        status: 'SCHEDULED'
+      };
+
+      // Добавляем команды только если они указаны
+      if (match.team1Id) {
+        matchData.team1Id = match.team1Id;
+      }
+      if (match.team2Id) {
+        matchData.team2Id = match.team2Id;
+      }
+
+      // Если нет команд, создаем матч без них (для будущих раундов)
+      try {
+        await prisma.match.create({
+          data: matchData
+        });
+      } catch (error) {
+        console.error('Ошибка создания матча:', error);
+        console.log('Данные матча:', matchData);
+        throw error;
+      }
     }
   }
 

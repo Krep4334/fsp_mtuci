@@ -4,6 +4,7 @@ import { tournamentAPI } from '../services/api'
 import { useSocket } from '../contexts/SocketContext'
 import { useEffect, useState } from 'react'
 import LoadingSpinner from '../components/LoadingSpinner'
+import BracketView from '../components/BracketView'
 import { 
   Trophy, 
   Users, 
@@ -57,13 +58,19 @@ const LiveScoreboardPage: React.FC = () => {
       enabled: !!tournamentId,
       refetchOnWindowFocus: false,
       onSuccess: (data) => {
-        setBrackets(data.data.tournament.brackets || [])
-        setIsLive(data.data.tournament.status === 'IN_PROGRESS')
+        console.log('Tournament data received:', data)
+        const tournament = data.data?.data?.tournament || data.data?.tournament
+        console.log('Tournament extracted:', tournament)
+        setBrackets(tournament?.brackets || [])
+        setIsLive(tournament?.status === 'IN_PROGRESS')
       },
+      onError: (error) => {
+        console.error('Error fetching tournament:', error)
+      }
     }
   )
 
-  const tournament = tournamentData?.data?.tournament
+  const tournament = tournamentData?.data?.data?.tournament || tournamentData?.data?.tournament
 
   // Socket connection for live updates
   useEffect(() => {
@@ -114,12 +121,21 @@ const LiveScoreboardPage: React.FC = () => {
   }
 
   if (!tournament) {
+    console.log('Tournament data full:', tournamentData)
     return (
       <div className="text-center py-12">
         <h1 className="text-2xl font-bold text-gray-900 mb-4">Турнир не найден</h1>
-        <p className="text-gray-600">
+        <p className="text-gray-600 mb-4">
           Запрашиваемый турнир не существует или был удален.
         </p>
+        <p className="text-xs text-gray-400">
+          ID турнира: {tournamentId}
+        </p>
+        {tournamentData && (
+          <pre className="mt-4 text-left text-xs bg-gray-100 p-4 rounded">
+            {JSON.stringify(tournamentData, null, 2)}
+          </pre>
+        )}
       </div>
     )
   }
@@ -185,119 +201,20 @@ const LiveScoreboardPage: React.FC = () => {
 
       {/* Brackets */}
       {brackets.length > 0 ? (
-        <div className="space-y-6">
+        <div className="space-y-8">
           {brackets.map((bracket) => (
             <div key={bracket.id} className="bg-white rounded-lg shadow-sm border border-gray-200">
               <div className="px-6 py-4 border-b border-gray-200">
-                <h2 className="text-lg font-semibold text-gray-900">
+                <h2 className="text-xl font-bold text-gray-900">
                   {bracket.name}
                 </h2>
               </div>
               
               <div className="p-6">
                 {bracket.matches && bracket.matches.length > 0 ? (
-                  <div className="space-y-4">
-                    {bracket.matches.map((match) => (
-                      <div
-                        key={match.id}
-                        className={cn(
-                          'bracket-match',
-                          match.status === 'COMPLETED' && 'completed',
-                          match.status === 'IN_PROGRESS' && 'in-progress'
-                        )}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-4 flex-1">
-                            <div className="text-sm text-gray-500 min-w-0">
-                              Раунд {match.round}
-                            </div>
-                            
-                            <div className="flex items-center space-x-4 flex-1">
-                              {/* Team 1 */}
-                              <div className="flex items-center space-x-3 flex-1">
-                                {match.team1?.logo ? (
-                                  <img
-                                    src={match.team1.logo}
-                                    alt={match.team1.name}
-                                    className="w-8 h-8 rounded-full object-cover"
-                                  />
-                                ) : (
-                                  <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                                    <span className="text-xs font-medium text-gray-600">
-                                      {match.team1?.name?.[0] || 'T'}
-                                    </span>
-                                  </div>
-                                )}
-                                <span className="font-medium text-gray-900">
-                                  {match.team1?.name || 'TBD'}
-                                </span>
-                              </div>
-
-                              {/* Score */}
-                              <div className="flex items-center space-x-2 min-w-0">
-                                {match.results && match.results.length > 0 ? (
-                                  <div className="flex items-center space-x-1">
-                                    <span className="text-lg font-bold text-gray-900">
-                                      {match.results[0].team1Score}
-                                    </span>
-                                    <span className="text-gray-400">-</span>
-                                    <span className="text-lg font-bold text-gray-900">
-                                      {match.results[0].team2Score}
-                                    </span>
-                                  </div>
-                                ) : (
-                                  <span className="text-gray-400">vs</span>
-                                )}
-                              </div>
-
-                              {/* Team 2 */}
-                              <div className="flex items-center space-x-3 flex-1 justify-end">
-                                <span className="font-medium text-gray-900">
-                                  {match.team2?.name || 'TBD'}
-                                </span>
-                                {match.team2?.logo ? (
-                                  <img
-                                    src={match.team2.logo}
-                                    alt={match.team2.name}
-                                    className="w-8 h-8 rounded-full object-cover"
-                                  />
-                                ) : (
-                                  <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                                    <span className="text-xs font-medium text-gray-600">
-                                      {match.team2?.name?.[0] || 'T'}
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center space-x-2 ml-4">
-                            <span className={cn(
-                              'badge',
-                              getStatusColor(match.status)
-                            )}>
-                              {getStatusIcon(match.status)}
-                              <span className="ml-1">
-                                {getStatusText(match.status)}
-                              </span>
-                            </span>
-                            
-                            {match.results && match.results.length > 0 && (
-                              <span className={cn(
-                                'badge',
-                                match.results[0].isConfirmed ? 'badge-success' : 'badge-warning'
-                              )}>
-                                {match.results[0].isConfirmed ? 'Подтвержден' : 'Ожидает подтверждения'}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  <BracketView bracket={bracket} tournamentType={tournament?.type || 'SINGLE_ELIMINATION'} />
                 ) : (
-                  <div className="text-center py-8">
+                  <div className="text-center py-12">
                     <Clock className="mx-auto h-12 w-12 text-gray-400" />
                     <h3 className="mt-2 text-sm font-medium text-gray-900">
                       Матчи еще не созданы

@@ -10,7 +10,8 @@ import {
   BarChart3,
   Plus,
   Eye,
-  X
+  X,
+  Bug
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -54,6 +55,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       name: 'Статистика',
       href: '/analytics',
       icon: BarChart3,
+      roles: ['ADMIN']
+    },
+    {
+      name: 'Отладка',
+      href: '/debug',
+      icon: Bug,
       roles: ['ADMIN']
     },
     {

@@ -13,6 +13,7 @@ import teamRoutes from './routes/teams';
 import matchRoutes from './routes/matches';
 import userRoutes from './routes/users';
 import bracketRoutes from './routes/brackets';
+import debugRoutes from './routes/debug';
 
 // Импорт middleware
 import { errorHandler } from './middleware/errorHandler';
@@ -53,6 +54,7 @@ app.use('/api/teams', teamRoutes);
 app.use('/api/matches', matchRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/brackets', bracketRoutes);
+app.use('/api/debug', debugRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => {

@@ -13,6 +13,7 @@ import EditTournamentPage from './pages/EditTournamentPage'
 import ProfilePage from './pages/ProfilePage'
 import DashboardPage from './pages/DashboardPage'
 import LiveScoreboardPage from './pages/LiveScoreboardPage'
+import DebugPage from './pages/DebugPage'
 
 function App() {
   return (
@@ -37,6 +38,7 @@ function App() {
             <Route path="tournaments/:id/edit" element={<EditTournamentPage />} />
             <Route path="profile" element={<ProfilePage />} />
             <Route path="live/:tournamentId" element={<LiveScoreboardPage />} />
+            <Route path="debug" element={<DebugPage />} />
           </Route>
           
           {/* Redirect to home */}

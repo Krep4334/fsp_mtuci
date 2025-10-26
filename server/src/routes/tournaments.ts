@@ -211,8 +211,8 @@ router.post('/', authenticate, authorize('ADMIN', 'ORGANIZER'), [
   }),
   body('location').optional().isLength({ max: 200 }),
   body('prizePool').optional().isString().custom((value) => {
-    if (value && (isNaN(parseFloat(value)) || parseFloat(value) < 0)) {
-      throw new Error('prizePool должно быть числом больше или равным 0');
+    if (value && value !== '' && isNaN(parseFloat(value))) {
+      throw new Error('prizePool должно быть числом');
     }
     return true;
   }),

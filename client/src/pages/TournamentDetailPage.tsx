@@ -1,6 +1,6 @@
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
-import { tournamentAPI } from '../services/api'
+import { tournamentAPI, matchAPI } from '../services/api'
 import { useAuth } from '../contexts/AuthContext'
 import LoadingSpinner from '../components/LoadingSpinner'
 import toast from 'react-hot-toast'
@@ -17,15 +17,20 @@ import {
   Play,
   Eye,
   Settings,
-  Trash2
+  Trash2,
+  Save,
+  Zap
 } from 'lucide-react'
 import { cn } from '../utils/cn'
+import { useState } from 'react'
 
 const TournamentDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const { user } = useAuth()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const [editingMatch, setEditingMatch] = useState<string | null>(null)
+  const [matchScores, setMatchScores] = useState<{[key: string]: {team1Score: number, team2Score: number}}>({})
 
   const { data: tournamentData, isLoading } = useQuery(
     ['tournament', id],
@@ -50,10 +55,60 @@ const TournamentDetailPage: React.FC = () => {
     },
   })
 
+  const submitMatchResultMutation = useMutation(
+    ({ matchId, data }: { matchId: string; data: { team1Score: number; team2Score: number } }) =>
+      matchAPI.submitMatchResult(matchId, data),
+    {
+      onSuccess: () => {
+        toast.success('Результат матча сохранен!')
+        queryClient.invalidateQueries(['tournament', id])
+        setEditingMatch(null)
+      },
+      onError: (error: any) => {
+        const message = error.response?.data?.error?.message || 'Ошибка сохранения результата'
+        toast.error(message)
+      },
+    }
+  )
+
   const handleDeleteTournament = () => {
     if (tournament && window.confirm(`Вы уверены, что хотите удалить турнир "${tournament.name}"? Это действие нельзя отменить.`)) {
       deleteTournamentMutation.mutate(tournament.id)
     }
+  }
+
+  const handleSubmitMatchResult = (matchId: string) => {
+    const scores = matchScores[matchId]
+    if (!scores || scores.team1Score === undefined || scores.team2Score === undefined) {
+      toast.error('Введите счет обеих команд')
+      return
+    }
+    
+    if (scores.team1Score === scores.team2Score) {
+      if (!window.confirm('Результат ничья. Продолжить?')) {
+        return
+      }
+    }
+
+    submitMatchResultMutation.mutate({ matchId, data: scores })
+  }
+
+  const handleStartEditing = (matchId: string, currentResult?: any) => {
+    if (currentResult) {
+      setMatchScores({
+        ...matchScores,
+        [matchId]: {
+          team1Score: currentResult.team1Score,
+          team2Score: currentResult.team2Score
+        }
+      })
+    } else {
+      setMatchScores({
+        ...matchScores,
+        [matchId]: { team1Score: 0, team2Score: 0 }
+      })
+    }
+    setEditingMatch(matchId)
   }
 
   const getStatusIcon = (status: string) => {
@@ -196,13 +251,24 @@ const TournamentDetailPage: React.FC = () => {
           </div>
 
           <div className="mt-6 lg:mt-0 flex flex-col sm:flex-row lg:flex-col space-y-2 sm:space-y-0 sm:space-x-2 lg:space-x-0 lg:space-y-2">
-            <button 
-              className="btn btn-primary"
-              onClick={() => toast('Live табло будет доступно после создания турнирной сетки', { icon: 'ℹ️' })}
-            >
-              <Eye className="h-4 w-4 mr-2" />
-              Live табло
-            </button>
+            {tournament.status === 'IN_PROGRESS' && tournament._count?.brackets > 0 ? (
+              <Link 
+                to={`/live/${tournament.id}`}
+                className="btn btn-primary"
+              >
+                <Eye className="h-4 w-4 mr-2" />
+                Live табло
+              </Link>
+            ) : (
+              <button 
+                className="btn btn-primary opacity-50 cursor-not-allowed"
+                disabled
+                title="Создайте турнирную сетку для просмотра Live табло"
+              >
+                <Eye className="h-4 w-4 mr-2" />
+                Live табло
+              </button>
+            )}
 
             {canEdit && (
               <button 
@@ -377,39 +443,126 @@ const TournamentDetailPage: React.FC = () => {
                     {bracket.matches.map((match) => (
                       <div
                         key={match.id}
-                        className="flex items-center justify-between p-3 border border-gray-200 rounded-lg"
+                        className="flex flex-col p-4 border border-gray-200 rounded-lg space-y-3"
                       >
-                        <div className="flex items-center space-x-4">
-                          <span className="text-sm text-gray-500">
-                            Раунд {match.round}
-                          </span>
+                        {/* Match Header */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-4">
+                            <span className="text-sm text-gray-500">
+                              Раунд {match.round}
+                            </span>
+                            <div className="flex items-center space-x-2">
+                              <span className="text-sm font-medium">
+                                {match.team1?.name || 'TBD'}
+                              </span>
+                              <span className="text-gray-400">vs</span>
+                              <span className="text-sm font-medium">
+                                {match.team2?.name || 'TBD'}
+                              </span>
+                            </div>
+                          </div>
                           <div className="flex items-center space-x-2">
-                            <span className="text-sm font-medium">
-                              {match.team1?.name || 'TBD'}
+                            <span className={cn(
+                              'badge',
+                              match.status === 'COMPLETED' ? 'badge-success' :
+                              match.status === 'IN_PROGRESS' ? 'badge-warning' :
+                              'badge-gray'
+                            )}>
+                              {match.status === 'COMPLETED' ? 'Завершен' :
+                               match.status === 'IN_PROGRESS' ? 'В процессе' :
+                               'Запланирован'}
                             </span>
-                            <span className="text-gray-400">vs</span>
-                            <span className="text-sm font-medium">
-                              {match.team2?.name || 'TBD'}
-                            </span>
+                            {match.results && match.results.length > 0 && (
+                              <span className="text-sm font-medium">
+                                {match.results[0].team1Score} - {match.results[0].team2Score}
+                              </span>
+                            )}
                           </div>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <span className={cn(
-                            'badge',
-                            match.status === 'COMPLETED' ? 'badge-success' :
-                            match.status === 'IN_PROGRESS' ? 'badge-warning' :
-                            'badge-gray'
-                          )}>
-                            {match.status === 'COMPLETED' ? 'Завершен' :
-                             match.status === 'IN_PROGRESS' ? 'В процессе' :
-                             'Запланирован'}
-                          </span>
-                          {match.results && match.results.length > 0 && (
-                            <span className="text-sm font-medium">
-                              {match.results[0].team1Score} - {match.results[0].team2Score}
-                            </span>
-                          )}
-                        </div>
+
+                        {/* Match Result Input */}
+                        {(canEdit || isJudge) && match.status !== 'COMPLETED' && (
+                          editingMatch === match.id ? (
+                            <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                              <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                                    {match.team1?.name || 'Команда 1'}
+                                  </label>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    value={matchScores[match.id]?.team1Score || 0}
+                                    onChange={(e) => setMatchScores({
+                                      ...matchScores,
+                                      [match.id]: {
+                                        ...matchScores[match.id],
+                                        team1Score: parseInt(e.target.value) || 0,
+                                        team2Score: matchScores[match.id]?.team2Score || 0
+                                      }
+                                    })}
+                                    className="input w-full"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                                    {match.team2?.name || 'Команда 2'}
+                                  </label>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    value={matchScores[match.id]?.team2Score || 0}
+                                    onChange={(e) => setMatchScores({
+                                      ...matchScores,
+                                      [match.id]: {
+                                        ...matchScores[match.id],
+                                        team1Score: matchScores[match.id]?.team1Score || 0,
+                                        team2Score: parseInt(e.target.value) || 0
+                                      }
+                                    })}
+                                    className="input w-full"
+                                  />
+                                </div>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <button
+                                  onClick={() => handleSubmitMatchResult(match.id)}
+                                  disabled={submitMatchResultMutation.isLoading}
+                                  className="btn btn-primary btn-sm flex-1"
+                                >
+                                  {submitMatchResultMutation.isLoading ? (
+                                    <>
+                                      <LoadingSpinner size="sm" className="mr-1" />
+                                      Сохранение...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Save className="h-4 w-4 mr-1" />
+                                      Завершить матч
+                                    </>
+                                  )}
+                                </button>
+                                <button
+                                  onClick={() => setEditingMatch(null)}
+                                  className="btn btn-outline btn-sm"
+                                >
+                                  Отмена
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex justify-end">
+                              <button
+                                onClick={() => handleStartEditing(match.id, match.results?.[0])}
+                                className="btn btn-outline btn-sm"
+                                title="Ввести результат"
+                              >
+                                <Zap className="h-4 w-4 mr-1" />
+                                {match.results && match.results.length > 0 ? 'Изменить результат' : 'Завершить матч'}
+                              </button>
+                            </div>
+                          )
+                        )}
                       </div>
                     ))}
                   </div>
