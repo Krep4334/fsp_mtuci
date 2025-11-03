@@ -3,6 +3,7 @@ import { body, validationResult } from 'express-validator';
 import { PrismaClient } from '@prisma/client';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import { createError } from '../middleware/errorHandler';
+import { getIoInstance } from '../socket';
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -280,6 +281,20 @@ router.post('/:id/result', authenticate, [
         winnerTeamId,
         matchWithData?.bracket?.id || updatedMatch.bracket?.id || null
       );
+    }
+
+    // Отправка WebSocket события всем подключенным к турниру
+    const io = getIoInstance();
+    if (io) {
+      io.to(`tournament_${match.tournamentId}`).emit('tournament_updated', {
+        type: 'match_completed',
+        matchId: id,
+        team1Score,
+        team2Score,
+        winner: winnerTeamId
+      });
+      
+      console.log(`📡 WebSocket событие отправлено для турнира ${match.tournamentId}`);
     }
 
     res.status(201).json({

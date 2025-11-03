@@ -21,6 +21,7 @@ import { notFound } from './middleware/notFound';
 
 // Импорт socket handlers
 import { setupSocketHandlers } from './socket/socketHandlers';
+import { setIoInstance } from './socket';
 
 // Импорт функции создания админа
 import { createAdminUser } from './utils/createAdmin';
@@ -35,6 +36,9 @@ const io = new Server(server, {
     methods: ["GET", "POST", "PUT", "DELETE"]
   }
 });
+
+// Сохраняем экземпляр io для доступа из роутов
+setIoInstance(io);
 
 const PORT = process.env['PORT'] || 3001;
 

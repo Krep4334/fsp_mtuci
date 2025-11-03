@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react'
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { io, Socket } from 'socket.io-client'
 import { useAuth } from './AuthContext'
 import toast from 'react-hot-toast'
@@ -65,7 +65,6 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       newSocket.on('match_result_updated', (data) => {
         console.log('Match result updated:', data)
-        toast.success('Результат матча обновлен')
       })
 
       newSocket.on('bracket_updated', (data) => {
@@ -79,49 +78,46 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         newSocket.close()
       }
     } else {
-      if (socket) {
-        socket.close()
-        setSocket(null)
-        setIsConnected(false)
-      }
+      setSocket(null)
+      setIsConnected(false)
     }
   }, [isAuthenticated, token])
 
-  const joinTournament = (tournamentId: string) => {
+  const joinTournament = useCallback((tournamentId: string) => {
     if (socket && isConnected) {
       socket.emit('join_tournament', tournamentId)
     }
-  }
+  }, [socket, isConnected])
 
-  const leaveTournament = (tournamentId: string) => {
+  const leaveTournament = useCallback((tournamentId: string) => {
     if (socket && isConnected) {
       socket.emit('leave_tournament', tournamentId)
     }
-  }
+  }, [socket, isConnected])
 
-  const joinMatch = (matchId: string) => {
+  const joinMatch = useCallback((matchId: string) => {
     if (socket && isConnected) {
       socket.emit('join_match', matchId)
     }
-  }
+  }, [socket, isConnected])
 
-  const leaveMatch = (matchId: string) => {
+  const leaveMatch = useCallback((matchId: string) => {
     if (socket && isConnected) {
       socket.emit('leave_match', matchId)
     }
-  }
+  }, [socket, isConnected])
 
-  const updateMatchStatus = (matchId: string, status: string) => {
+  const updateMatchStatus = useCallback((matchId: string, status: string) => {
     if (socket && isConnected) {
       socket.emit('match_status_update', { matchId, status })
     }
-  }
+  }, [socket, isConnected])
 
-  const submitMatchResult = (matchId: string, team1Score: number, team2Score: number) => {
+  const submitMatchResult = useCallback((matchId: string, team1Score: number, team2Score: number) => {
     if (socket && isConnected) {
       socket.emit('match_result', { matchId, team1Score, team2Score })
     }
-  }
+  }, [socket, isConnected])
 
   const value: SocketContextType = {
     socket,

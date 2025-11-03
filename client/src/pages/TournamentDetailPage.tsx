@@ -2,6 +2,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { tournamentAPI, matchAPI } from '../services/api'
 import { useAuth } from '../contexts/AuthContext'
+import { useSocket } from '../contexts/SocketContext'
 import LoadingSpinner from '../components/LoadingSpinner'
 import toast from 'react-hot-toast'
 import { 
@@ -22,11 +23,12 @@ import {
   Zap
 } from 'lucide-react'
 import { cn } from '../utils/cn'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 const TournamentDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const { user } = useAuth()
+  const { socket, isConnected, joinTournament, leaveTournament } = useSocket()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [editingMatch, setEditingMatch] = useState<string | null>(null)
@@ -110,6 +112,42 @@ const TournamentDetailPage: React.FC = () => {
     }
     setEditingMatch(matchId)
   }
+
+  // Socket connection for live updates
+  useEffect(() => {
+    if (id && isConnected) {
+      joinTournament(id)
+    }
+    
+    return () => {
+      if (id && isConnected) {
+        leaveTournament(id)
+      }
+    }
+  }, [id, isConnected, joinTournament, leaveTournament])
+
+  // Listen for tournament updates via WebSocket
+  useEffect(() => {
+    if (!socket) return
+
+    const handleTournamentUpdated = () => {
+      console.log('Tournament updated via WebSocket, invalidating cache...')
+      queryClient.invalidateQueries(['tournament', id])
+    }
+
+    const handleMatchResultUpdated = () => {
+      console.log('Match result updated via WebSocket')
+      queryClient.invalidateQueries(['tournament', id])
+    }
+
+    socket.on('tournament_updated', handleTournamentUpdated)
+    socket.on('match_result_updated', handleMatchResultUpdated)
+
+    return () => {
+      socket.off('tournament_updated', handleTournamentUpdated)
+      socket.off('match_result_updated', handleMatchResultUpdated)
+    }
+  }, [socket, queryClient, id])
 
   const getStatusIcon = (status: string) => {
     switch (status) {

@@ -49,7 +49,7 @@ const LiveScoreboardPage: React.FC = () => {
   const { tournamentId } = useParams<{ tournamentId: string }>()
   const [brackets, setBrackets] = useState<Bracket[]>([])
   const [isLive, setIsLive] = useState(false)
-  const { isConnected, joinTournament } = useSocket()
+  const { isConnected, joinTournament, leaveTournament, socket } = useSocket()
 
   const { data: tournamentData, isLoading, refetch } = useQuery(
     ['tournament', tournamentId],
@@ -77,7 +77,38 @@ const LiveScoreboardPage: React.FC = () => {
     if (tournamentId && isConnected) {
       joinTournament(tournamentId)
     }
-  }, [tournamentId, isConnected, joinTournament])
+    
+    return () => {
+      if (tournamentId && isConnected) {
+        leaveTournament(tournamentId)
+      }
+    }
+  }, [tournamentId, isConnected, joinTournament, leaveTournament])
+
+  // Listen for tournament updates via WebSocket
+  useEffect(() => {
+    if (!socket) return
+
+    const handleTournamentUpdated = async () => {
+      console.log('Tournament updated via WebSocket, refetching data...')
+      await refetch()
+    }
+
+    const handleBracketUpdated = (data: any) => {
+      console.log('Bracket updated via WebSocket:', data)
+      if (data.brackets) {
+        setBrackets(data.brackets)
+      }
+    }
+
+    socket.on('tournament_updated', handleTournamentUpdated)
+    socket.on('bracket_updated', handleBracketUpdated)
+
+    return () => {
+      socket.off('tournament_updated', handleTournamentUpdated)
+      socket.off('bracket_updated', handleBracketUpdated)
+    }
+  }, [socket, refetch])
 
   const getStatusIcon = (status: string) => {
     switch (status) {
