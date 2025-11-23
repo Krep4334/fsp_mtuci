@@ -161,10 +161,10 @@ const TournamentsPage: React.FC = () => {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-5 md:p-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {/* Search */}
-          <div className="md:col-span-2">
+          <div className="sm:col-span-2 lg:col-span-2">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
@@ -248,13 +248,13 @@ const TournamentsPage: React.FC = () => {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
             {filteredTournaments.map((tournament) => (
               <div
                 key={tournament.id}
                 className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
               >
-                <div className="p-6">
+                <div className="p-4 sm:p-5 md:p-6">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-3">
                       <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">

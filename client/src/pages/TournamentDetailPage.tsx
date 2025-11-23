@@ -227,16 +227,16 @@ const TournamentDetailPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-5 md:p-6">
         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between">
-          <div className="flex-1">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
-                <Trophy className="h-6 w-6 text-primary-600" />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center space-x-2 sm:space-x-3 mb-3 sm:mb-4">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Trophy className="h-5 w-5 sm:h-6 sm:w-6 text-primary-600" />
               </div>
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">{tournament.name}</h1>
-                <p className="text-lg text-gray-600">{getTypeText(tournament.type)}</p>
+              <div className="min-w-0 flex-1">
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 truncate">{tournament.name}</h1>
+                <p className="text-sm sm:text-base md:text-lg text-gray-600">{getTypeText(tournament.type)}</p>
               </div>
             </div>
 
@@ -253,7 +253,7 @@ const TournamentDetailPage: React.FC = () => {
               <p className="text-gray-700 mb-4">{tournament.description}</p>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 text-xs sm:text-sm">
               <div className="flex items-center space-x-2">
                 <Users className="h-4 w-4 text-gray-400" />
                 <span className="text-gray-600">
@@ -288,7 +288,7 @@ const TournamentDetailPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="mt-6 lg:mt-0 flex flex-col sm:flex-row lg:flex-col space-y-2 sm:space-y-0 sm:space-x-2 lg:space-x-0 lg:space-y-2">
+          <div className="mt-4 sm:mt-6 lg:mt-0 flex flex-col sm:flex-row lg:flex-col space-y-2 sm:space-y-0 sm:space-x-2 lg:space-x-0 lg:space-y-2 w-full sm:w-auto lg:w-full">
             {tournament.status === 'IN_PROGRESS' && tournament._count?.brackets > 0 ? (
               <Link 
                 to={`/live/${tournament.id}`}
@@ -343,65 +343,65 @@ const TournamentDetailPage: React.FC = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-5 md:p-6">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center">
-                <Users className="h-5 w-5 text-primary-600" />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+                <Users className="h-4 w-4 sm:h-5 sm:w-5 text-primary-600" />
               </div>
             </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Команды</p>
-              <p className="text-2xl font-bold text-gray-900">
+            <div className="ml-3 sm:ml-4">
+              <p className="text-xs sm:text-sm font-medium text-gray-500">Команды</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">
                 {tournament._count?.teams || 0}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-5 md:p-6">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <div className="w-8 h-8 bg-success-100 rounded-lg flex items-center justify-center">
-                <Play className="h-5 w-5 text-success-600" />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-success-100 rounded-lg flex items-center justify-center">
+                <Play className="h-4 w-4 sm:h-5 sm:w-5 text-success-600" />
               </div>
             </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Матчи</p>
-              <p className="text-2xl font-bold text-gray-900">
+            <div className="ml-3 sm:ml-4">
+              <p className="text-xs sm:text-sm font-medium text-gray-500">Матчи</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">
                 {tournament._count?.matches || 0}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-5 md:p-6">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <div className="w-8 h-8 bg-warning-100 rounded-lg flex items-center justify-center">
-                <Trophy className="h-5 w-5 text-warning-600" />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-warning-100 rounded-lg flex items-center justify-center">
+                <Trophy className="h-4 w-4 sm:h-5 sm:w-5 text-warning-600" />
               </div>
             </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Сетки</p>
-              <p className="text-2xl font-bold text-gray-900">
+            <div className="ml-3 sm:ml-4">
+              <p className="text-xs sm:text-sm font-medium text-gray-500">Сетки</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">
                 {tournament._count?.brackets || 0}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-5 md:p-6">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <div className="w-8 h-8 bg-secondary-100 rounded-lg flex items-center justify-center">
-                <DollarSign className="h-5 w-5 text-secondary-600" />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-secondary-100 rounded-lg flex items-center justify-center">
+                <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-secondary-600" />
               </div>
             </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Призовой фонд</p>
-              <p className="text-2xl font-bold text-gray-900">
+            <div className="ml-3 sm:ml-4">
+              <p className="text-xs sm:text-sm font-medium text-gray-500">Призовой фонд</p>
+              <p className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">
                 {tournament.prizePool ? `${tournament.prizePool.toLocaleString()} ₽` : '—'}
               </p>
             </div>
@@ -418,7 +418,7 @@ const TournamentDetailPage: React.FC = () => {
         </div>
         <div className="p-6">
           {tournament.teams && tournament.teams.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               {tournament.teams.map((team) => (
                 <div
                   key={team.id}
@@ -481,7 +481,7 @@ const TournamentDetailPage: React.FC = () => {
                     {bracket.matches.map((match) => (
                       <div
                         key={match.id}
-                        className="flex flex-col p-4 border border-gray-200 rounded-lg space-y-3"
+                        className="flex flex-col p-3 sm:p-4 border border-gray-200 rounded-lg space-y-2 sm:space-y-3"
                       >
                         {/* Match Header */}
                         <div className="flex items-center justify-between">

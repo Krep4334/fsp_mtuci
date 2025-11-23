@@ -100,13 +100,13 @@ const DashboardPage: React.FC = () => {
   return (
     <div className="space-y-8">
       {/* Welcome Section */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-5 md:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">
               Добро пожаловать, {user?.firstName || user?.username}!
             </h1>
-            <p className="text-gray-600 mt-1">
+            <p className="text-sm sm:text-base text-gray-600 mt-1">
               Управляйте своими турнирами и следите за результатами
             </p>
           </div>
@@ -123,65 +123,65 @@ const DashboardPage: React.FC = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 md:gap-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-5 md:p-6">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center">
-                <Trophy className="h-5 w-5 text-primary-600" />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+                <Trophy className="h-4 w-4 sm:h-5 sm:w-5 text-primary-600" />
               </div>
             </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Всего турниров</p>
-              <p className="text-2xl font-bold text-gray-900">
+            <div className="ml-3 sm:ml-4">
+              <p className="text-xs sm:text-sm font-medium text-gray-500">Всего турниров</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">
                 {tournamentsData?.data?.data?.pagination?.total || 0}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-5 md:p-6">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <div className="w-8 h-8 bg-success-100 rounded-lg flex items-center justify-center">
-                <CheckCircle className="h-5 w-5 text-success-600" />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-success-100 rounded-lg flex items-center justify-center">
+                <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-success-600" />
               </div>
             </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Завершенных</p>
-              <p className="text-2xl font-bold text-gray-900">
+            <div className="ml-3 sm:ml-4">
+              <p className="text-xs sm:text-sm font-medium text-gray-500">Завершенных</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">
                 {tournaments.filter(t => t.status === 'COMPLETED').length}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-5 md:p-6">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <div className="w-8 h-8 bg-warning-100 rounded-lg flex items-center justify-center">
-                <Clock className="h-5 w-5 text-warning-600" />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-warning-100 rounded-lg flex items-center justify-center">
+                <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-warning-600" />
               </div>
             </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">В процессе</p>
-              <p className="text-2xl font-bold text-gray-900">
+            <div className="ml-3 sm:ml-4">
+              <p className="text-xs sm:text-sm font-medium text-gray-500">В процессе</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">
                 {tournaments.filter(t => t.status === 'IN_PROGRESS').length}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-5 md:p-6">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <div className="w-8 h-8 bg-secondary-100 rounded-lg flex items-center justify-center">
-                <Users className="h-5 w-5 text-secondary-600" />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-secondary-100 rounded-lg flex items-center justify-center">
+                <Users className="h-4 w-4 sm:h-5 sm:w-5 text-secondary-600" />
               </div>
             </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Всего команд</p>
-              <p className="text-2xl font-bold text-gray-900">
+            <div className="ml-3 sm:ml-4">
+              <p className="text-xs sm:text-sm font-medium text-gray-500">Всего команд</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">
                 {tournaments.reduce((sum, t) => sum + (t._count?.teams || 0), 0)}
               </p>
             </div>
@@ -281,7 +281,7 @@ const DashboardPage: React.FC = () => {
         <h2 className="text-lg font-semibold text-gray-900 mb-4">
           Быстрые действия
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           <Link
             to="/tournaments/new"
             className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"

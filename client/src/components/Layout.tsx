@@ -13,8 +13,8 @@ const Layout: React.FC = () => {
       <div className="flex">
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         
-        <main className="flex-1 lg:ml-64">
-          <div className="px-4 sm:px-6 lg:px-8 py-8">
+        <main className="flex-1 w-full">
+          <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 max-w-full overflow-x-hidden">
             <Outlet />
           </div>
         </main>

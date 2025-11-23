@@ -73,35 +73,35 @@ const BracketView: React.FC<BracketViewProps> = ({ bracket, tournamentType }) =>
 
     return (
       <div className={cn(
-        "w-64 border-2 rounded-lg overflow-hidden transition-all hover:shadow-lg",
+        "w-full sm:w-56 md:w-64 border-2 rounded-lg overflow-hidden transition-all hover:shadow-lg",
         getStatusColor(match.status)
       )}>
         {/* Команда 1 */}
         <div className={cn(
-          "px-4 py-3 flex items-center justify-between transition-colors",
+          "px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 flex items-center justify-between transition-colors",
           winnerId === match.team1?.id && "bg-success-100",
           !match.team1 && "opacity-50"
         )}>
-          <div className="flex items-center space-x-2 flex-1 min-w-0">
+          <div className="flex items-center space-x-1.5 sm:space-x-2 flex-1 min-w-0">
             {match.team1?.logo ? (
               <img
                 src={match.team1.logo}
                 alt={match.team1.name}
-                className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full object-cover flex-shrink-0"
               />
             ) : (
-              <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
+              <div className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
                 <span className="text-xs font-bold text-gray-600">
                   {match.team1?.name?.[0] || 'T'}
                 </span>
               </div>
             )}
-            <span className="text-sm font-semibold truncate">
+            <span className="text-xs sm:text-sm font-semibold truncate">
               {match.team1?.name || 'TBD'}
             </span>
           </div>
           {hasResult && (
-            <span className="text-lg font-bold ml-2 text-gray-800">
+            <span className="text-base sm:text-lg font-bold ml-2 text-gray-800">
               {match.results![0].team1Score}
             </span>
           )}
@@ -112,30 +112,30 @@ const BracketView: React.FC<BracketViewProps> = ({ bracket, tournamentType }) =>
 
         {/* Команда 2 */}
         <div className={cn(
-          "px-4 py-3 flex items-center justify-between transition-colors",
+          "px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 flex items-center justify-between transition-colors",
           winnerId === match.team2?.id && "bg-success-100",
           !match.team2 && "opacity-50"
         )}>
-          <div className="flex items-center space-x-2 flex-1 min-w-0">
+          <div className="flex items-center space-x-1.5 sm:space-x-2 flex-1 min-w-0">
             {match.team2?.logo ? (
               <img
                 src={match.team2.logo}
                 alt={match.team2.name}
-                className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full object-cover flex-shrink-0"
               />
             ) : (
-              <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
+              <div className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
                 <span className="text-xs font-bold text-gray-600">
                   {match.team2?.name?.[0] || 'T'}
                 </span>
               </div>
             )}
-            <span className="text-sm font-semibold truncate">
+            <span className="text-xs sm:text-sm font-semibold truncate">
               {match.team2?.name || 'TBD'}
             </span>
           </div>
           {hasResult && (
-            <span className="text-lg font-bold ml-2 text-gray-800">
+            <span className="text-base sm:text-lg font-bold ml-2 text-gray-800">
               {match.results![0].team2Score}
             </span>
           )}
@@ -172,23 +172,23 @@ const BracketView: React.FC<BracketViewProps> = ({ bracket, tournamentType }) =>
     }
 
     return (
-      <div className="w-full overflow-x-auto py-8 px-4">
-        <div className="flex justify-start items-start space-x-12 min-w-max">
+      <div className="w-full overflow-x-auto py-4 sm:py-6 lg:py-8 px-2 sm:px-4">
+        <div className="flex justify-start items-start space-x-4 sm:space-x-6 md:space-x-8 lg:space-x-12 min-w-max">
           {rounds.map((round, roundIndex) => {
             const matchesInRound = matchesByRound[round]
             
             // Вычисляем отступ сверху для каждого раунда
-            // Каждый следующий раунд опускаем на высоту одного матча (96px)
-            const topOffset = roundIndex * 96
+            // Используем CSS переменные для адаптивности
+            const topOffset = roundIndex * 80 // Базовый отступ, CSS media queries скорректируют
 
             return (
               <div 
                 key={round} 
-                className="flex flex-col items-center space-y-6"
+                className="flex flex-col items-center space-y-3 sm:space-y-4 md:space-y-6"
                 style={{ marginTop: `${topOffset}px` }}
               >
                 {/* Название раунда */}
-                <div className="text-lg font-bold text-primary-700 mb-6 px-4 py-2 bg-primary-100 rounded-full text-center">
+                <div className="text-sm sm:text-base md:text-lg font-bold text-primary-700 mb-3 sm:mb-4 md:mb-6 px-2 sm:px-3 md:px-4 py-1 sm:py-1.5 md:py-2 bg-primary-100 rounded-full text-center whitespace-nowrap">
                   {round === maxRound ? 'Финал' :
                    round === maxRound - 1 ? 'Полуфинал' :
                    round === maxRound - 2 ? 'Четвертьфинал' :
@@ -196,7 +196,7 @@ const BracketView: React.FC<BracketViewProps> = ({ bracket, tournamentType }) =>
                 </div>
 
                 {/* Матчи раунда */}
-                <div className="flex flex-col space-y-6">
+                <div className="flex flex-col space-y-3 sm:space-y-4 md:space-y-6">
                   {matchesInRound.map((match, matchIndex) => (
                     <div key={match.id} className="relative">
                       {renderMatchCard(match)}

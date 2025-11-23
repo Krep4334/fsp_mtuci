@@ -60,9 +60,9 @@ const CreateTournamentPage: React.FC = () => {
   const tournamentType = watch('type')
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-4 sm:space-y-5 md:space-y-6">
       {/* Header */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-5 md:p-6">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
             <Trophy className="h-5 w-5 text-primary-600" />
@@ -76,12 +76,12 @@ const CreateTournamentPage: React.FC = () => {
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Basic Information */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-5 md:p-6">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
             Основная информация
           </h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 md:gap-6">
             <div className="md:col-span-2">
               <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
                 Название турнира *
@@ -169,12 +169,12 @@ const CreateTournamentPage: React.FC = () => {
         </div>
 
         {/* Dates and Location */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-5 md:p-6">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
             Даты и место проведения
           </h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 md:gap-6">
             <div>
               <label htmlFor="registrationStart" className="block text-sm font-medium text-gray-700 mb-2">
                 <Calendar className="inline h-4 w-4 mr-1" />
@@ -247,12 +247,12 @@ const CreateTournamentPage: React.FC = () => {
         </div>
 
         {/* Prize and Rules */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-5 md:p-6">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
             Призовой фонд и правила
           </h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 md:gap-6">
             <div>
               <label htmlFor="prizePool" className="block text-sm font-medium text-gray-700 mb-2">
                 <DollarSign className="inline h-4 w-4 mr-1" />
@@ -323,18 +323,18 @@ const CreateTournamentPage: React.FC = () => {
         )}
 
         {/* Actions */}
-        <div className="flex items-center justify-end space-x-4 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end space-y-2 sm:space-y-0 sm:space-x-4 bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-5 md:p-6">
           <button
             type="button"
             onClick={() => navigate('/tournaments')}
-            className="btn btn-outline"
+            className="btn btn-outline w-full sm:w-auto"
           >
             Отмена
           </button>
           <button
             type="submit"
             disabled={isSubmitting}
-            className="btn btn-primary"
+            className="btn btn-primary w-full sm:w-auto"
           >
             {isSubmitting ? (
               <>
