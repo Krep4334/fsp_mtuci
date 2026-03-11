@@ -222,7 +222,7 @@ const TournamentDetailPage: React.FC = () => {
   }
 
   const canEdit = user?.role === 'ADMIN' || tournament.organizer?.id === user?.id
-  const isJudge = tournament.judges?.some(judge => judge.user.id === user?.id)
+  const isJudge = tournament.judges?.some((judge: any) => judge.user.id === user?.id)
 
   return (
     <div className="space-y-6">
@@ -419,7 +419,7 @@ const TournamentDetailPage: React.FC = () => {
         <div className="p-6">
           {tournament.teams && tournament.teams.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-              {tournament.teams.map((team) => (
+              {tournament.teams.map((team: any) => (
                 <div
                   key={team.id}
                   className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50"
@@ -471,14 +471,14 @@ const TournamentDetailPage: React.FC = () => {
             </h2>
           </div>
           <div className="p-6">
-            {tournament.brackets.map((bracket) => (
+            {tournament.brackets.map((bracket: any) => (
               <div key={bracket.id} className="mb-6">
                 <h3 className="text-md font-medium text-gray-900 mb-4">
                   {bracket.name}
                 </h3>
                 {bracket.matches && bracket.matches.length > 0 ? (
                   <div className="space-y-2">
-                    {bracket.matches.map((match) => (
+                    {bracket.matches.map((match: any) => (
                       <div
                         key={match.id}
                         className="flex flex-col p-3 sm:p-4 border border-gray-200 rounded-lg space-y-2 sm:space-y-3"

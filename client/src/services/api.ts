@@ -1,6 +1,8 @@
-import axios from 'axios'
+import axios, { AxiosError } from 'axios'
+import { notifyTokensRefreshed } from './authRefreshCallback'
 
-const API_BASE_URL = 'http://localhost:3001/api'
+// Используем переменную окружения или относительный путь для Docker
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api'
 
 // Создание экземпляра axios
 const api = axios.create({
@@ -10,7 +12,7 @@ const api = axios.create({
   },
 })
 
-// Интерцептор для добавления токена к запросам
+// Интерцептор для добавления access-токена к запросам
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token')
@@ -24,15 +26,68 @@ api.interceptors.request.use(
   }
 )
 
-// Интерцептор для обработки ошибок
+// Один активный refresh, чтобы при нескольких 401 подряд не дергать refresh несколько раз
+let refreshPromise: Promise<string | null> | null = null
+
+// Интерцептор: при 401 пробуем обновить access по refresh, затем повторяем запрос
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
+  async (error: AxiosError) => {
+    const originalRequest = error.config as typeof error.config & { _retry?: boolean }
+
+    if (error.response?.status !== 401 || originalRequest._retry) {
+      const isUnauth = error.response?.status === 401
+      if (isUnauth) {
+        localStorage.removeItem('token')
+        localStorage.removeItem('refreshToken')
+        window.location.href = '/login'
+      }
+      return Promise.reject(error)
+    }
+
+    // Не обновляем токен при 401 от самого эндпоинта refresh
+    if (originalRequest.url?.includes('/auth/refresh')) {
+      localStorage.removeItem('token')
+      localStorage.removeItem('refreshToken')
+      window.location.href = '/login'
+      return Promise.reject(error)
+    }
+
+    const refreshToken = localStorage.getItem('refreshToken')
+    if (!refreshToken) {
       localStorage.removeItem('token')
       window.location.href = '/login'
+      return Promise.reject(error)
     }
-    return Promise.reject(error)
+
+    if (!refreshPromise) {
+      refreshPromise = api
+        .post<{ data: { accessToken: string; refreshToken: string } }>('/auth/refresh', { refreshToken })
+        .then((res) => {
+          const accessToken = res.data.data.accessToken
+          const newRefreshToken = res.data.data.refreshToken
+          localStorage.setItem('token', accessToken)
+          localStorage.setItem('refreshToken', newRefreshToken)
+          notifyTokensRefreshed(accessToken, newRefreshToken)
+          return accessToken
+        })
+        .catch(() => {
+          localStorage.removeItem('token')
+          localStorage.removeItem('refreshToken')
+          window.location.href = '/login'
+          return null
+        })
+        .finally(() => {
+          refreshPromise = null
+        })
+    }
+
+    const newAccess = await refreshPromise
+    if (!newAccess) return Promise.reject(error)
+
+    originalRequest._retry = true
+    originalRequest.headers.Authorization = `Bearer ${newAccess}`
+    return api(originalRequest)
   }
 )
 
@@ -40,7 +95,7 @@ api.interceptors.response.use(
 export const authAPI = {
   login: (login: string, password: string) =>
     api.post('/auth/login', { login, password }),
-  
+
   register: (data: {
     email: string
     username: string
@@ -49,10 +104,16 @@ export const authAPI = {
     lastName?: string
   }) =>
     api.post('/auth/register', data),
-  
+
   getMe: () =>
     api.get('/auth/me'),
-  
+
+  refresh: (refreshToken: string) =>
+    api.post('/auth/refresh', { refreshToken }),
+
+  logout: (refreshToken?: string | null) =>
+    api.post('/auth/logout', { refreshToken }),
+
   updateProfile: (data: {
     firstName?: string
     lastName?: string

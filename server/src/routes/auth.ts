@@ -5,9 +5,35 @@ import { body, validationResult } from 'express-validator';
 import { PrismaClient } from '@prisma/client';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import { createError } from '../middleware/errorHandler';
+import { generateRefreshToken, hashRefreshToken } from '../utils/tokenUtils';
 
 const router = express.Router();
 const prisma = new PrismaClient();
+
+const ACCESS_TOKEN_EXPIRY = '15m';   // Короткоживущий access — меньше рисков при утечке
+const REFRESH_TOKEN_EXPIRY_DAYS = 7;
+
+/** Создаёт пару access + refresh и сохраняет refresh в БД */
+async function createTokenPair(userId: string) {
+  const jwtSecret = process.env['JWT_SECRET'];
+  if (!jwtSecret) throw new Error('JWT secret не настроен');
+
+  const accessToken = jwt.sign(
+    { userId },
+    jwtSecret,
+    { expiresIn: ACCESS_TOKEN_EXPIRY }
+  );
+
+  const { token: refreshToken, tokenHash } = generateRefreshToken();
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + REFRESH_TOKEN_EXPIRY_DAYS);
+
+  await prisma.refreshToken.create({
+    data: { userId, tokenHash, expiresAt }
+  });
+
+  return { accessToken, refreshToken };
+}
 
 // Регистрация
 router.post('/register', [
@@ -61,22 +87,15 @@ router.post('/register', [
       }
     });
 
-    // Генерация токена
-    const jwtSecret = process.env['JWT_SECRET'];
-    if (!jwtSecret) {
-      return next(createError('JWT secret не настроен', 500));
-    }
-    const token = jwt.sign(
-      { userId: user.id },
-      jwtSecret,
-      { expiresIn: '7d' }
-    );
+    // Access + refresh токены
+    const { accessToken, refreshToken } = await createTokenPair(user.id);
 
     res.status(201).json({
       success: true,
       data: {
         user,
-        token
+        accessToken,
+        refreshToken
       }
     });
   } catch (error) {
@@ -118,16 +137,7 @@ router.post('/login', [
       return next(createError('Неверные учетные данные', 401));
     }
 
-    // Генерация токена
-    const jwtSecret = process.env['JWT_SECRET'];
-    if (!jwtSecret) {
-      return next(createError('JWT secret не настроен', 500));
-    }
-    const token = jwt.sign(
-      { userId: user.id },
-      jwtSecret,
-      { expiresIn: '7d' }
-    );
+    const { accessToken, refreshToken } = await createTokenPair(user.id);
 
     res.json({
       success: true,
@@ -141,9 +151,71 @@ router.post('/login', [
           role: user.role,
           avatar: user.avatar
         },
-        token
+        accessToken,
+        refreshToken
       }
     });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Обновление access-токена по refresh-токену
+router.post('/refresh', [
+  body('refreshToken').notEmpty().withMessage('refreshToken обязателен')
+], async (req: any, res: any, next: any) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return next(createError('Некорректные данные', 400));
+    }
+
+    const refreshTokenRaw = req.body.refreshToken as string;
+    const tokenHash = hashRefreshToken(refreshTokenRaw);
+
+    const stored = await prisma.refreshToken.findFirst({
+      where: { tokenHash },
+      include: { user: true }
+    });
+
+    if (!stored || stored.expiresAt < new Date()) {
+      if (stored) await prisma.refreshToken.delete({ where: { id: stored.id } }).catch(() => {});
+      return next(createError('Недействительный или истёкший refresh-токен', 401));
+    }
+
+    if (!stored.user.isActive) {
+      await prisma.refreshToken.delete({ where: { id: stored.id } });
+      return next(createError('Пользователь заблокирован', 401));
+    }
+
+    // Удаляем использованный refresh (rotation)
+    await prisma.refreshToken.delete({ where: { id: stored.id } });
+
+    const { accessToken, refreshToken: newRefreshToken } = await createTokenPair(stored.userId);
+
+    res.json({
+      success: true,
+      data: {
+        accessToken,
+        refreshToken: newRefreshToken
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Выход — инвалидация refresh-токена (опционально)
+router.post('/logout', [
+  body('refreshToken').optional()
+], async (req: any, res: any, next: any) => {
+  try {
+    const refreshTokenRaw = req.body.refreshToken;
+    if (refreshTokenRaw) {
+      const tokenHash = hashRefreshToken(refreshTokenRaw);
+      await prisma.refreshToken.deleteMany({ where: { tokenHash } });
+    }
+    res.json({ success: true });
   } catch (error) {
     next(error);
   }

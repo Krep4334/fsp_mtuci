@@ -39,20 +39,56 @@
 
 ## 📦 Установка и запуск
 
-### Предварительные требования
+### Вариант 1: Docker (рекомендуется)
+
+**Предварительные требования:**
+- Docker Desktop (или Docker Engine + Docker Compose)
+
+**Быстрый запуск:**
+```bash
+# Запустить все сервисы одной командой
+docker-compose up -d
+
+# Просмотр логов
+docker-compose logs -f
+
+# Остановка
+docker-compose down
+```
+
+После запуска приложение доступно:
+- **Frontend**: http://localhost
+- **Backend API**: http://localhost:3001/api
+
+**Учетные данные администратора:**
+- Email: `admin@tournament.local`
+- Username: `admin`
+- Password: `admin123`
+
+**Полезные команды:**
+```bash
+docker-compose ps              # Статус контейнеров
+docker-compose restart         # Перезапуск
+docker-compose logs -f server  # Логи сервера
+docker-compose exec server sh  # Вход в контейнер сервера
+```
+
+### Вариант 2: Локальная установка
+
+**Предварительные требования:**
 
 - Node.js 18+
 - PostgreSQL 13+
 - npm или yarn
 
-### 1. Клонирование репозитория
+#### 1. Клонирование репозитория
 
 ```bash
 git clone <repository-url>
 cd tournament-management-system
 ```
 
-### 2. Установка зависимостей
+#### 2. Установка зависимостей
 
 ```bash
 # Установка зависимостей для всего проекта
@@ -64,7 +100,7 @@ cd server && npm install
 cd ../client && npm install
 ```
 
-### 3. Настройка базы данных
+#### 3. Настройка базы данных
 
 ```bash
 # Переход в папку сервера
@@ -81,7 +117,7 @@ cp env.example .env
 # CLIENT_URL="http://localhost:5173"
 ```
 
-### 4. Инициализация базы данных
+#### 4. Инициализация базы данных
 
 ```bash
 # Генерация Prisma клиента
@@ -91,7 +127,7 @@ npm run db:generate
 npm run db:migrate
 ```
 
-### 5. Запуск приложения
+#### 5. Запуск приложения
 
 ```bash
 # Возврат в корневую папку

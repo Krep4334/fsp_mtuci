@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react'
 import { authAPI } from '../services/api'
+import { setAuthRefreshCallback } from '../services/authRefreshCallback'
 import toast from 'react-hot-toast'
 
 interface User {
@@ -10,21 +11,24 @@ interface User {
   lastName?: string
   role: string
   avatar?: string
+  createdAt?: string
 }
 
 interface AuthState {
   user: User | null
-  token: string | null
+  token: string | null       // access token
+  refreshToken: string | null
   isLoading: boolean
   isAuthenticated: boolean
 }
 
 type AuthAction =
   | { type: 'AUTH_START' }
-  | { type: 'AUTH_SUCCESS'; payload: { user: User; token: string } }
+  | { type: 'AUTH_SUCCESS'; payload: { user: User; token: string; refreshToken: string } }
   | { type: 'AUTH_FAILURE' }
   | { type: 'LOGOUT' }
   | { type: 'UPDATE_USER'; payload: User }
+  | { type: 'UPDATE_TOKENS'; payload: { token: string; refreshToken: string } }
 
 interface AuthContextType extends AuthState {
   login: (login: string, password: string) => Promise<void>
@@ -44,6 +48,7 @@ interface RegisterData {
 const initialState: AuthState = {
   user: null,
   token: localStorage.getItem('token'),
+  refreshToken: localStorage.getItem('refreshToken'),
   isLoading: true,
   isAuthenticated: false,
 }
@@ -60,6 +65,7 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
         ...state,
         user: action.payload.user,
         token: action.payload.token,
+        refreshToken: action.payload.refreshToken,
         isLoading: false,
         isAuthenticated: true,
       }
@@ -68,6 +74,7 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
         ...state,
         user: null,
         token: null,
+        refreshToken: null,
         isLoading: false,
         isAuthenticated: false,
       }
@@ -76,6 +83,7 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
         ...state,
         user: null,
         token: null,
+        refreshToken: null,
         isLoading: false,
         isAuthenticated: false,
       }
@@ -83,6 +91,12 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
       return {
         ...state,
         user: action.payload,
+      }
+    case 'UPDATE_TOKENS':
+      return {
+        ...state,
+        token: action.payload.token,
+        refreshToken: action.payload.refreshToken,
       }
     default:
       return state
@@ -102,6 +116,16 @@ export const useAuth = () => {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState)
 
+  // Callback для api interceptor: после успешного refresh обновляем state и localStorage
+  useEffect(() => {
+    setAuthRefreshCallback((accessToken, refreshToken) => {
+      localStorage.setItem('token', accessToken)
+      localStorage.setItem('refreshToken', refreshToken)
+      dispatch({ type: 'UPDATE_TOKENS', payload: { token: accessToken, refreshToken } })
+    })
+    return () => setAuthRefreshCallback(null)
+  }, [])
+
   // Проверка токена при загрузке приложения
   useEffect(() => {
     const checkAuth = async () => {
@@ -110,12 +134,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         try {
           dispatch({ type: 'AUTH_START' })
           const response = await authAPI.getMe()
+          // После возможного refresh в interceptor токены в localStorage уже обновлены
+          const currentToken = localStorage.getItem('token')
+          const currentRefresh = localStorage.getItem('refreshToken')
           dispatch({
             type: 'AUTH_SUCCESS',
-            payload: { user: response.data.data.user, token },
+            payload: { user: response.data.data.user, token: currentToken || token, refreshToken: currentRefresh || '' },
           })
         } catch (error) {
           localStorage.removeItem('token')
+          localStorage.removeItem('refreshToken')
           dispatch({ type: 'AUTH_FAILURE' })
         }
       } else {
@@ -130,12 +158,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       dispatch({ type: 'AUTH_START' })
       const response = await authAPI.login(login, password)
-      const { user, token } = response.data.data
+      const data = response.data.data
+      const user = data.user
+      const accessToken = data.accessToken ?? data.token
+      const refreshToken = data.refreshToken ?? ''
 
-      localStorage.setItem('token', token)
+      localStorage.setItem('token', accessToken)
+      if (refreshToken) localStorage.setItem('refreshToken', refreshToken)
       dispatch({
         type: 'AUTH_SUCCESS',
-        payload: { user, token },
+        payload: { user, token: accessToken, refreshToken },
       })
 
       toast.success(`Добро пожаловать, ${user.username}!`)
@@ -151,12 +183,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       dispatch({ type: 'AUTH_START' })
       const response = await authAPI.register(data)
-      const { user, token } = response.data.data
+      const resData = response.data.data
+      const user = resData.user
+      const accessToken = resData.accessToken ?? resData.token
+      const refreshToken = resData.refreshToken ?? ''
 
-      localStorage.setItem('token', token)
+      localStorage.setItem('token', accessToken)
+      if (refreshToken) localStorage.setItem('refreshToken', refreshToken)
       dispatch({
         type: 'AUTH_SUCCESS',
-        payload: { user, token },
+        payload: { user, token: accessToken, refreshToken },
       })
 
       toast.success(`Регистрация успешна! Добро пожаловать, ${user.username}!`)
@@ -169,8 +205,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   const logout = () => {
+    const refreshToken = localStorage.getItem('refreshToken')
     localStorage.removeItem('token')
+    localStorage.removeItem('refreshToken')
     dispatch({ type: 'LOGOUT' })
+    authAPI.logout(refreshToken).catch(() => {})
     toast.success('Вы вышли из системы')
   }
 
