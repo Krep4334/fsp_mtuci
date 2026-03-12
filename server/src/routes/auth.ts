@@ -15,6 +15,11 @@ const REFRESH_TOKEN_EXPIRY_DAYS = 7;
 
 /** Создаёт пару access + refresh и сохраняет refresh в БД */
 async function createTokenPair(userId: string) {
+  if (typeof (prisma as any).refreshToken?.create !== 'function') {
+    throw new Error(
+      'Prisma client не содержит модель RefreshToken. Выполните в папке server: npx prisma generate'
+    );
+  }
   const jwtSecret = process.env['JWT_SECRET'];
   if (!jwtSecret) throw new Error('JWT secret не настроен');
 
