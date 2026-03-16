@@ -10,7 +10,7 @@ import { generateRefreshToken, hashRefreshToken } from '../utils/tokenUtils';
 const router = express.Router();
 const prisma = new PrismaClient();
 
-const ACCESS_TOKEN_EXPIRY = '15m';   // Короткоживущий access — меньше рисков при утечке
+const ACCESS_TOKEN_EXPIRY = '15m';   
 const REFRESH_TOKEN_EXPIRY_DAYS = 7;
 
 /** Создаёт пару access + refresh и сохраняет refresh в БД */

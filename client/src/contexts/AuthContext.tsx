@@ -3,6 +3,16 @@ import { authAPI } from '../services/api'
 import { setAuthRefreshCallback } from '../services/authRefreshCallback'
 import toast from 'react-hot-toast'
 
+const setCookie = (name: string, value: string, days: number) => {
+  const expires = new Date()
+  expires.setDate(expires.getDate() + days)
+  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; expires=${expires.toUTCString()}`
+}
+
+const deleteCookie = (name: string) => {
+  document.cookie = `${name}=; path=/; max-age=0`
+}
+
 interface User {
   id: string
   email: string
@@ -121,6 +131,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setAuthRefreshCallback((accessToken, refreshToken) => {
       localStorage.setItem('token', accessToken)
       localStorage.setItem('refreshToken', refreshToken)
+      // Сроки жизни cookie на фронте: access ~7 дней, refresh ~7 дней
+      setCookie('accessToken', accessToken, 7)
+      setCookie('refreshToken', refreshToken, 7)
       dispatch({ type: 'UPDATE_TOKENS', payload: { token: accessToken, refreshToken } })
     })
     return () => setAuthRefreshCallback(null)
@@ -165,6 +178,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       localStorage.setItem('token', accessToken)
       if (refreshToken) localStorage.setItem('refreshToken', refreshToken)
+      setCookie('accessToken', accessToken, 7)
+      if (refreshToken) setCookie('refreshToken', refreshToken, 7)
       dispatch({
         type: 'AUTH_SUCCESS',
         payload: { user, token: accessToken, refreshToken },
@@ -190,6 +205,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       localStorage.setItem('token', accessToken)
       if (refreshToken) localStorage.setItem('refreshToken', refreshToken)
+      setCookie('accessToken', accessToken, 7)
+      if (refreshToken) setCookie('refreshToken', refreshToken, 7)
       dispatch({
         type: 'AUTH_SUCCESS',
         payload: { user, token: accessToken, refreshToken },
@@ -208,6 +225,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const refreshToken = localStorage.getItem('refreshToken')
     localStorage.removeItem('token')
     localStorage.removeItem('refreshToken')
+    deleteCookie('accessToken')
+    deleteCookie('refreshToken')
     dispatch({ type: 'LOGOUT' })
     authAPI.logout(refreshToken).catch(() => {})
     toast.success('Вы вышли из системы')
