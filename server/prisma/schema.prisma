@@ -59,8 +59,27 @@ model User {
   captainTeams         Team[] @relation("TeamCaptain")
   teamMemberships      TeamMember[]
   refreshTokens        RefreshToken[]
+  storedObjects        UserStoredObject[]
 
   @@map("users")
+}
+
+// Ссылка на объект в S3-совместимом хранилище (MinIO и т.п.) — URL и ключ в БД
+model UserStoredObject {
+  id           String   @id @default(cuid())
+  userId       String
+  objectKey    String
+  objectUrl    String
+  originalName String
+  contentType  String?
+  sizeBytes    Int?
+  label        String?
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("user_stored_objects")
 }
 
 model RefreshToken {

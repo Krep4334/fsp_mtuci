@@ -123,9 +123,11 @@ cp env.example .env
 # Генерация Prisma клиента
 npm run db:generate
 
-# Применение миграций
+# Применение миграций (создаёт все таблицы, в т.ч. refresh_tokens)
 npm run db:migrate
 ```
+
+**Если ошибка «The table public.refresh_tokens does not exist»:** на этой машине не применены миграции. В папке `server` выполни: `npm run db:migrate` или `npx prisma migrate deploy`.
 
 #### 5. Запуск приложения
 

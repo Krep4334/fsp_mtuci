@@ -19,6 +19,10 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
+    // FormData + application/json ломает multipart: файл не доходит до multer
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type']
+    }
     return config
   },
   (error) => {
@@ -118,6 +122,7 @@ export const authAPI = {
     firstName?: string
     lastName?: string
     username?: string
+    avatar?: string
   }) =>
     api.put('/auth/profile', data),
 }
@@ -231,12 +236,31 @@ export const bracketAPI = {
     api.post('/brackets/update', data),
 }
 
+// Объектное хранилище (MinIO / S3)
+export const storageAPI = {
+  uploadAvatar: (file: File) => {
+    const fd = new FormData()
+    fd.append('file', file)
+    return api.post('/storage/avatar', fd)
+  },
+  uploadMaterial: (file: File, label?: string) => {
+    const fd = new FormData()
+    fd.append('file', file)
+    if (label) fd.append('label', label)
+    return api.post('/storage/material', fd)
+  },
+  getMyObjects: () => api.get('/storage/my'),
+  deleteStoredObject: (id: string) => api.delete(`/storage/${id}`),
+}
+
 // API для пользователей
 export const userAPI = {
   getUsers: (params?: {
     page?: number
     limit?: number
     search?: string
+    role?: string
+    isActive?: 'true' | 'false'
   }) =>
     api.get('/users', { params }),
   

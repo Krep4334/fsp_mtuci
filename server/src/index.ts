@@ -14,6 +14,8 @@ import matchRoutes from './routes/matches';
 import userRoutes from './routes/users';
 import bracketRoutes from './routes/brackets';
 import debugRoutes from './routes/debug';
+import storageRoutes from './routes/storage';
+import { ensureBucketExists } from './services/objectStorage';
 
 // Импорт middleware
 import { errorHandler } from './middleware/errorHandler';
@@ -62,6 +64,7 @@ app.use('/api/matches', matchRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/brackets', bracketRoutes);
 app.use('/api/debug', debugRoutes);
+app.use('/api/storage', storageRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => {
@@ -74,6 +77,11 @@ setupSocketHandlers(io);
 // Error handling
 app.use(notFound);
 app.use(errorHandler);
+
+// Бакет в MinIO/S3 (если настроено)
+ensureBucketExists().catch(() => {
+  console.warn('⚠️  Объектное хранилище недоступно или не настроено — загрузки в S3 отключены');
+});
 
 // Автоматическое создание админа при запуске сервера
 createAdminUser().catch(error => {

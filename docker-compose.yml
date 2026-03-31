@@ -19,6 +19,39 @@ services:
     networks:
       - tournament-network
 
+  # MinIO (S3-совместимое объектное хранилище)
+  minio:
+    image: minio/minio:latest
+    container_name: tournament-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - tournament-network
+
+  # Создание бакета и публичное чтение объектов (для демо / лабы)
+  minio-init:
+    image: minio/mc:latest
+    container_name: tournament-minio-init
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      sleep 3;
+      mc alias set local http://minio:9000 minioadmin minioadmin;
+      mc mb local/tournament-objects --ignore-existing;
+      mc anonymous set download local/tournament-objects;
+      exit 0;
+      "
+    networks:
+      - tournament-network
+
   # Backend сервер
   server:
     build:
@@ -34,6 +67,13 @@ services:
       CLIENT_URL: http://localhost:80
       UPLOAD_DIR: ./uploads
       MAX_FILE_SIZE: 5242880
+      S3_ENDPOINT: http://minio:9000
+      S3_PUBLIC_URL: http://localhost:9000
+      S3_REGION: us-east-1
+      S3_BUCKET: tournament-objects
+      S3_ACCESS_KEY: minioadmin
+      S3_SECRET_KEY: minioadmin
+      MAX_S3_FILE_SIZE: 20971520
     ports:
       - "3001:3001"
     volumes:
@@ -41,6 +81,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      minio:
+        condition: service_started
     networks:
       - tournament-network
     restart: unless-stopped
@@ -63,6 +105,8 @@ volumes:
   postgres_data:
     driver: local
   server_uploads:
+    driver: local
+  minio_data:
     driver: local
 
 networks:

@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useForm } from 'react-hook-form'
-import { useMutation, useQueryClient } from 'react-query'
+import { useMutation, useQuery, useQueryClient } from 'react-query'
 import { useAuth } from '../contexts/AuthContext'
-import { authAPI } from '../services/api'
-import { User, Mail, Calendar, Shield, Edit, Save, X } from 'lucide-react'
+import { authAPI, storageAPI } from '../services/api'
+import { User, Mail, Calendar, Shield, Edit, Save, X, Upload, FileText, Trash2, ExternalLink } from 'lucide-react'
 import LoadingSpinner from '../components/LoadingSpinner'
 import toast from 'react-hot-toast'
 
@@ -17,6 +17,59 @@ const ProfilePage: React.FC = () => {
   const { user, updateUser } = useAuth()
   const queryClient = useQueryClient()
   const [isEditing, setIsEditing] = useState(false)
+  const [materialLabel, setMaterialLabel] = useState('')
+  const avatarInputRef = useRef<HTMLInputElement>(null)
+  const materialInputRef = useRef<HTMLInputElement>(null)
+
+  const { data: myObjectsRes, refetch: refetchObjects } = useQuery(
+    ['storage-my', user?.id],
+    () => storageAPI.getMyObjects(),
+    { enabled: Boolean(user?.id), refetchOnWindowFocus: false }
+  )
+  const storedObjects =
+    (myObjectsRes?.data?.data?.objects as Array<{
+      id: string
+      objectUrl: string
+      originalName: string
+      label?: string | null
+      contentType?: string | null
+      sizeBytes?: number | null
+      createdAt: string
+    }>) ?? []
+
+  const uploadAvatarMutation = useMutation(
+    (file: File) => storageAPI.uploadAvatar(file),
+    {
+      onSuccess: (res) => {
+        const u = res.data?.data?.user
+        if (u) updateUser(u)
+        toast.success('Аватар сохранён в хранилище, в профиле — ссылка из БД')
+      },
+      onError: (e: any) =>
+        toast.error(e.response?.data?.error?.message || 'Не удалось загрузить аватар (проверь MinIO/S3)'),
+    }
+  )
+
+  const uploadMaterialMutation = useMutation(
+    ({ file, label }: { file: File; label?: string }) => storageAPI.uploadMaterial(file, label),
+    {
+      onSuccess: () => {
+        refetchObjects()
+        setMaterialLabel('')
+        toast.success('Файл сохранён в хранилище, ссылка записана в БД')
+      },
+      onError: (e: any) =>
+        toast.error(e.response?.data?.error?.message || 'Ошибка загрузки материала'),
+    }
+  )
+
+  const deleteObjectMutation = useMutation((id: string) => storageAPI.deleteStoredObject(id), {
+    onSuccess: () => {
+      refetchObjects()
+      toast.success('Объект удалён')
+    },
+    onError: (e: any) => toast.error(e.response?.data?.error?.message || 'Ошибка удаления'),
+  })
 
   const {
     register,
@@ -33,7 +86,7 @@ const ProfilePage: React.FC = () => {
 
   const updateProfileMutation = useMutation(authAPI.updateProfile, {
     onSuccess: (response) => {
-      updateUser(response.data.user)
+      updateUser(response.data.data.user)
       toast.success('Профиль успешно обновлен!')
       setIsEditing(false)
     },
@@ -82,28 +135,55 @@ const ProfilePage: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      {/* Header */}
+      <input
+        ref={avatarInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0]
+          if (f) uploadAvatarMutation.mutate(f)
+          e.target.value = ''
+        }}
+      />
+
+      {/* Header — основное применение хранилища: аватар */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="flex items-center space-x-4">
-          <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center">
-            {user?.avatar ? (
-              <img
-                src={user.avatar}
-                alt={user.username}
-                className="w-16 h-16 rounded-full object-cover"
-              />
-            ) : (
-              <User className="h-8 w-8 text-primary-600" />
-            )}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-6">
+          <div className="flex flex-col items-center sm:items-start gap-2 shrink-0">
+            <div className="w-24 h-24 bg-primary-100 rounded-full flex items-center justify-center overflow-hidden ring-2 ring-gray-100">
+              {user?.avatar ? (
+                <img
+                  src={user.avatar}
+                  alt={user.username}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <User className="h-12 w-12 text-primary-600" />
+              )}
+            </div>
+            <button
+              type="button"
+              className="btn btn-outline btn-sm"
+              disabled={uploadAvatarMutation.isLoading}
+              onClick={() => avatarInputRef.current?.click()}
+            >
+              <Upload className="h-4 w-4 mr-1" />
+              {uploadAvatarMutation.isLoading ? 'Загрузка…' : 'Сменить фото'}
+            </button>
+            <p className="text-xs text-gray-500 text-center sm:text-left max-w-[200px] leading-snug">
+              Фото лежит в объектном хранилище (MinIO/S3). В PostgreSQL — только URL в поле{' '}
+              <code className="text-xs bg-gray-100 px-1 rounded">avatar</code>.
+            </p>
           </div>
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <h1 className="text-2xl font-bold text-gray-900">
               {user?.firstName && user?.lastName 
                 ? `${user.firstName} ${user.lastName}`
                 : user?.username
               }
             </h1>
-            <p className="text-gray-600">
+            <p className="text-gray-600 mt-1">
               <span className={getRoleColor(user?.role || '')}>
                 {getRoleText(user?.role || '')}
               </span>
@@ -111,7 +191,7 @@ const ProfilePage: React.FC = () => {
           </div>
           <button
             onClick={() => setIsEditing(!isEditing)}
-            className="btn btn-outline"
+            className="btn btn-outline self-start"
           >
             {isEditing ? (
               <>
@@ -297,6 +377,84 @@ const ProfilePage: React.FC = () => {
             </div>
           )}
         </form>
+      </div>
+
+      {/* Дополнительно: другие объекты в том же хранилище (лаба / редкие файлы) */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-900">Дополнительные файлы</h2>
+          <p className="text-sm text-gray-500 mt-1">
+            Аватар настраивается сверху. Здесь — при необходимости другие объекты: тоже в MinIO/S3, метаданные и ссылка в таблице{' '}
+            <code className="text-xs bg-gray-100 px-1 rounded">user_stored_objects</code>.
+          </p>
+        </div>
+        <div className="p-6 space-y-6">
+          <div>
+            <h3 className="text-sm font-medium text-gray-900 mb-2">Загрузить материал</h3>
+            <div className="flex flex-col sm:flex-row gap-3 mb-3">
+              <input
+                type="text"
+                className="input flex-1"
+                placeholder="Подпись (необязательно)"
+                value={materialLabel}
+                onChange={(e) => setMaterialLabel(e.target.value)}
+              />
+              <input
+                ref={materialInputRef}
+                type="file"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0]
+                  if (f) uploadMaterialMutation.mutate({ file: f, label: materialLabel || undefined })
+                  e.target.value = ''
+                }}
+              />
+              <button
+                type="button"
+                className="btn btn-primary"
+                disabled={uploadMaterialMutation.isLoading}
+                onClick={() => materialInputRef.current?.click()}
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                Выбрать файл
+              </button>
+            </div>
+            {storedObjects.length === 0 ? (
+              <p className="text-sm text-gray-500">Пока нет загруженных объектов</p>
+            ) : (
+              <ul className="divide-y divide-gray-100 border border-gray-200 rounded-lg">
+                {storedObjects.map((obj) => (
+                  <li key={obj.id} className="flex items-center justify-between gap-4 p-3 text-sm">
+                    <div className="min-w-0">
+                      <div className="font-medium text-gray-900 truncate">{obj.originalName}</div>
+                      {obj.label && <div className="text-gray-500">{obj.label}</div>}
+                      <a
+                        href={obj.objectUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary-600 hover:underline inline-flex items-center gap-1 mt-1"
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                        Открыть по ссылке из БД
+                      </a>
+                    </div>
+                    <button
+                      type="button"
+                      className="btn btn-outline btn-sm text-danger-600 border-danger-200 shrink-0"
+                      onClick={() => {
+                        if (window.confirm('Удалить объект из хранилища и БД?')) {
+                          deleteObjectMutation.mutate(obj.id)
+                        }
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Security Settings */}

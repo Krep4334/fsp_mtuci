@@ -11,7 +11,9 @@ const prisma = new PrismaClient();
 router.get('/', authenticate, authorize('ADMIN'), [
   query('page').optional().isInt({ min: 1 }),
   query('limit').optional().isInt({ min: 1, max: 50 }),
-  query('search').optional().isLength({ min: 1, max: 100 })
+  query('search').optional().isLength({ min: 1, max: 100 }),
+  query('role').optional().isIn(['ADMIN', 'ORGANIZER', 'JUDGE', 'PARTICIPANT', 'SPECTATOR']),
+  query('isActive').optional().isIn(['true', 'false'])
 ], async (req: any, res: any, next: any) => {
   try {
     const errors = validationResult(req);
@@ -19,7 +21,7 @@ router.get('/', authenticate, authorize('ADMIN'), [
       return next(createError('Некорректные параметры запроса', 400));
     }
 
-    const { page = 1, limit = 10, search } = req.query;
+    const { page = 1, limit = 10, search, role, isActive } = req.query;
     const skip = (Number(page) - 1) * Number(limit);
 
     const where: any = {};
@@ -30,6 +32,15 @@ router.get('/', authenticate, authorize('ADMIN'), [
         { firstName: { contains: search as string, mode: 'insensitive' } },
         { lastName: { contains: search as string, mode: 'insensitive' } }
       ];
+    }
+    if (role) {
+      where.role = role;
+    }
+    if (isActive === 'true') {
+      where.isActive = true;
+    }
+    if (isActive === 'false') {
+      where.isActive = false;
     }
 
     const [users, total] = await Promise.all([
@@ -43,6 +54,7 @@ router.get('/', authenticate, authorize('ADMIN'), [
           username: true,
           firstName: true,
           lastName: true,
+          avatar: true,
           role: true,
           isActive: true,
           createdAt: true,

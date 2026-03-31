@@ -14,6 +14,7 @@ import ProfilePage from './pages/ProfilePage'
 import DashboardPage from './pages/DashboardPage'
 import LiveScoreboardPage from './pages/LiveScoreboardPage'
 import DebugPage from './pages/DebugPage'
+import UsersPage from './pages/UsersPage'
 
 function App() {
   return (
@@ -39,6 +40,7 @@ function App() {
             <Route path="profile" element={<ProfilePage />} />
             <Route path="live/:tournamentId" element={<LiveScoreboardPage />} />
             <Route path="debug" element={<DebugPage />} />
+            <Route path="users" element={<UsersPage />} />
           </Route>
           
           {/* Redirect to home */}

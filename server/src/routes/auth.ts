@@ -256,7 +256,8 @@ router.get('/me', authenticate, async (req: AuthRequest, res, next) => {
 router.put('/profile', authenticate, [
   body('firstName').optional().isLength({ min: 1, max: 50 }),
   body('lastName').optional().isLength({ min: 1, max: 50 }),
-  body('username').optional().isLength({ min: 3, max: 20 }).matches(/^[a-zA-Z0-9_]+$/)
+  body('username').optional().isLength({ min: 3, max: 20 }).matches(/^[a-zA-Z0-9_]+$/),
+  body('avatar').optional().isString().isLength({ max: 2048 })
 ], async (req: AuthRequest, res: any, next: any) => {
   try {
     const errors = validationResult(req);
@@ -264,7 +265,7 @@ router.put('/profile', authenticate, [
       return next(createError('Некорректные данные', 400));
     }
 
-    const { firstName, lastName, username } = req.body;
+    const { firstName, lastName, username, avatar } = req.body;
     const userId = req.user!.id;
 
     // Проверка уникальности username если он изменяется
@@ -286,7 +287,8 @@ router.put('/profile', authenticate, [
       data: {
         ...(firstName && { firstName }),
         ...(lastName && { lastName }),
-        ...(username && { username })
+        ...(username && { username }),
+        ...(typeof avatar === 'string' && avatar.length > 0 && { avatar })
       },
       select: {
         id: true,

@@ -131,7 +131,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setAuthRefreshCallback((accessToken, refreshToken) => {
       localStorage.setItem('token', accessToken)
       localStorage.setItem('refreshToken', refreshToken)
-      // Сроки жизни cookie на фронте: access ~7 дней, refresh ~7 дней
       setCookie('accessToken', accessToken, 7)
       setCookie('refreshToken', refreshToken, 7)
       dispatch({ type: 'UPDATE_TOKENS', payload: { token: accessToken, refreshToken } })
