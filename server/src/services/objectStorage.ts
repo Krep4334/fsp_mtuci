@@ -4,6 +4,7 @@ import {
   DeleteObjectCommand,
   HeadBucketCommand,
   CreateBucketCommand,
+  PutBucketPolicyCommand,
 } from '@aws-sdk/client-s3';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -79,6 +80,21 @@ function getClient(): S3Client {
   return client;
 }
 
+/** Политика «все могут читать объекты по URL» — нужна, чтобы <img src="…/bucket/key"> открывался в браузере без подписи. */
+function bucketPublicReadPolicy(bucket: string): string {
+  return JSON.stringify({
+    Version: '2012-10-17',
+    Statement: [
+      {
+        Effect: 'Allow',
+        Principal: { AWS: ['*'] },
+        Action: ['s3:GetObject'],
+        Resource: [`arn:aws:s3:::${bucket}/*`],
+      },
+    ],
+  });
+}
+
 export async function ensureBucketExists(): Promise<void> {
   const cfg = getStorageConfig();
   if (!cfg) return;
@@ -87,6 +103,19 @@ export async function ensureBucketExists(): Promise<void> {
     await s3.send(new HeadBucketCommand({ Bucket: cfg.bucket }));
   } catch {
     await s3.send(new CreateBucketCommand({ Bucket: cfg.bucket }));
+  }
+  try {
+    await s3.send(
+      new PutBucketPolicyCommand({
+        Bucket: cfg.bucket,
+        Policy: bucketPublicReadPolicy(cfg.bucket),
+      }),
+    );
+  } catch (e) {
+    console.warn(
+      '⚠️  Не удалось применить политику публичного чтения бакета — аватары по прямой ссылке могут не открываться:',
+      e,
+    );
   }
 }
 
@@ -111,7 +140,7 @@ export async function uploadBuffer(params: {
       Key: params.key,
       Body: params.body,
       ContentType: params.contentType || 'application/octet-stream',
-      ACL: 'public-read',
+      // ACL на многих MinIO отключён (Object Ownership); доступ через политику бакета в ensureBucketExists.
     })
   );
   return { key: params.key, url: publicUrlForKey(params.key) };

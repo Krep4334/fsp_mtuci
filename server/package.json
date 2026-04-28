@@ -7,6 +7,8 @@
     "dev": "nodemon",
     "build": "tsc",
     "start": "node dist/index.js",
+    "test": "cross-env NODE_ENV=test tsx --test src/utils/bracketMath.test.ts src/utils/tokenUtils.test.ts src/middleware/errorHandler.test.ts src/app.test.ts",
+    "test:watch": "cross-env NODE_ENV=test tsx --watch --test src/utils/bracketMath.test.ts src/utils/tokenUtils.test.ts src/middleware/errorHandler.test.ts src/app.test.ts",
     "postinstall": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",
@@ -28,6 +30,8 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
+    "cross-env": "^7.0.3",
+    "@types/supertest": "^7.2.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
@@ -36,7 +40,9 @@
     "@types/uuid": "^9.0.7",
     "nodemon": "^3.0.2",
     "prisma": "^5.7.1",
+    "supertest": "^7.2.2",
     "ts-node": "^10.9.2",
+    "tsx": "^4.19.2",
     "typescript": "^5.3.3"
   }
 }

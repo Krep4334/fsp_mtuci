@@ -1,0 +1,5 @@
+# Замените хост в Sitemap на ваш продакшен-домен (абсолютный URL обязателен для поисковиков).
+User-agent: *
+Allow: /
+
+Sitemap: http://localhost:3001/sitemap.xml

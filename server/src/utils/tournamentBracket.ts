@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { getNextPowerOfTwo } from './bracketMath';
 
 const prisma = new PrismaClient();
 
@@ -29,7 +30,7 @@ export class TournamentBracketGenerator {
     }
 
     const teamCount = teams.length;
-    const bracketSize = this.getNextPowerOfTwo(teamCount);
+    const bracketSize = getNextPowerOfTwo(teamCount);
     const totalRounds = Math.log2(bracketSize);
     
     // Создание основной сетки
@@ -128,7 +129,7 @@ export class TournamentBracketGenerator {
     }
 
     const teamCount = teams.length;
-    const bracketSize = this.getNextPowerOfTwo(teamCount);
+    const bracketSize = getNextPowerOfTwo(teamCount);
     
     // Создание основной сетки (Winners Bracket)
     const winnersBracket = await prisma.bracket.create({
@@ -348,11 +349,6 @@ export class TournamentBracketGenerator {
         }
       });
     }
-  }
-
-  // Получение следующей степени двойки
-  private static getNextPowerOfTwo(n: number): number {
-    return Math.pow(2, Math.ceil(Math.log2(n)));
   }
 
   // Перемешивание массива

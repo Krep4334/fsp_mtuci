@@ -14,6 +14,9 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ size = 'md', className 
 
   return (
     <div
+      role="status"
+      aria-busy="true"
+      aria-label="Загрузка"
       className={cn(
         'animate-spin rounded-full border-2 border-gray-300 border-t-primary-600',
         sizeClasses[size],

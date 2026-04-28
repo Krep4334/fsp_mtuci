@@ -13,9 +13,11 @@ export const errorHandler = (
 ) => {
   let { statusCode = 500, message } = error;
 
-  // Логирование ошибки
-  console.error(`Error ${statusCode}: ${message}`);
-  console.error(error.stack);
+  // В тестах не засоряем stderr ожидаемыми ошибками (NODE_ENV=test выставляется в npm run test).
+  if (process.env['NODE_ENV'] !== 'test') {
+    console.error(`Error ${statusCode}: ${message}`);
+    console.error(error.stack);
+  }
 
   // Если это ошибка валидации Prisma
   if (error.name === 'PrismaClientValidationError') {

@@ -100,7 +100,7 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
     case 'UPDATE_USER':
       return {
         ...state,
-        user: action.payload,
+        user: state.user ? { ...state.user, ...action.payload } : action.payload,
       }
     case 'UPDATE_TOKENS':
       return {
