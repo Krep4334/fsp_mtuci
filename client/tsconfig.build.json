@@ -1,9 +1,14 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
+    // Для production-сборки не нужны типы Vitest.
+    "types": ["vite/client"],
     "noUnusedLocals": false,
     "noUnusedParameters": false,
-    "noImplicitAny": false
+    "noImplicitAny": false,
+    // Убираем ошибку TS5101 про deprecation `baseUrl` (TypeScript 7).
+    // В нашей версии TypeScript допустимы значения уровня 5.x.
+    "ignoreDeprecations": "5.0"
   },
   "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx", "src/test/**"]
 }

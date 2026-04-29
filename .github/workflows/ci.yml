@@ -106,7 +106,6 @@ jobs:
           --health-timeout=5s
           --health-retries=10
     env:
-      NODE_ENV: production
       DISABLE_OBJECT_STORAGE: "true"
       JWT_SECRET: "test-jwt-secret"
       DATABASE_URL: "postgresql://tournament:tournament@localhost:5432/tournament_test"
@@ -132,7 +131,7 @@ jobs:
         working-directory: client
       - name: Run server + Playwright
         run: |
-          npm start &
+          NODE_ENV=production npm start &
           SERVER_PID=$!
           for i in {1..60}; do
             if curl -sSf http://localhost:3001/api/health > /dev/null; then
