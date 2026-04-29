@@ -57,7 +57,9 @@ const UsersPage: React.FC = () => {
         queryClient.invalidateQueries(['admin-users'])
         toast.success('Статус обновлён')
       },
-      onError: (e: any) => toast.error(e.response?.data?.error?.message || 'Ошибка'),
+      onError: (e: any) => {
+        toast.error(e.response?.data?.error?.message || 'Ошибка')
+      },
     }
   )
 

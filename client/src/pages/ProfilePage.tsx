@@ -45,8 +45,11 @@ const ProfilePage: React.FC = () => {
         if (u) updateUser(u)
         toast.success('Аватар сохранён в хранилище, в профиле — ссылка из БД')
       },
-      onError: (e: any) =>
-        toast.error(e.response?.data?.error?.message || 'Не удалось загрузить аватар (проверь MinIO/S3)'),
+      onError: (e: any) => {
+        toast.error(
+          e.response?.data?.error?.message || 'Не удалось загрузить аватар (проверь MinIO/S3)'
+        )
+      },
     }
   )
 
@@ -58,8 +61,9 @@ const ProfilePage: React.FC = () => {
         setMaterialLabel('')
         toast.success('Файл сохранён в хранилище, ссылка записана в БД')
       },
-      onError: (e: any) =>
-        toast.error(e.response?.data?.error?.message || 'Ошибка загрузки материала'),
+      onError: (e: any) => {
+        toast.error(e.response?.data?.error?.message || 'Ошибка загрузки материала')
+      },
     }
   )
 
@@ -68,7 +72,9 @@ const ProfilePage: React.FC = () => {
       refetchObjects()
       toast.success('Объект удалён')
     },
-    onError: (e: any) => toast.error(e.response?.data?.error?.message || 'Ошибка удаления'),
+    onError: (e: any) => {
+      toast.error(e.response?.data?.error?.message || 'Ошибка удаления')
+    },
   })
 
   const {
