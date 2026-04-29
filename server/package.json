@@ -8,6 +8,7 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "test": "cross-env NODE_ENV=test tsx --test src/utils/bracketMath.test.ts src/utils/tokenUtils.test.ts src/middleware/errorHandler.test.ts src/app.test.ts",
+    "test:integration": "cross-env NODE_ENV=test tsx --test src/integration/auth.integration.test.ts src/integration/tournaments.integration.test.ts",
     "test:watch": "cross-env NODE_ENV=test tsx --watch --test src/utils/bracketMath.test.ts src/utils/tokenUtils.test.ts src/middleware/errorHandler.test.ts src/app.test.ts",
     "postinstall": "prisma generate",
     "db:migrate": "prisma migrate dev",
